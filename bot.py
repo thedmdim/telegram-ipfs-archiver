@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import logging, re, os, subprocess
- 
+import time
+
 from aiogram import Bot, Dispatcher, executor, types
 from youtube_dl import YoutubeDL
 
@@ -29,11 +30,15 @@ async def startup(dispatcher):
         os.makedirs(STORAGE)
         logger.info("Storage folder created")
 
-    ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
 
-    if ipfs_keys.returncode:
-        logger.error(ipfs_keys.stderr.decode("utf-8"))
-        return
+    while ipfs_keys := subprocess.run(["ipfs", "key", "list"], capture_output=True).returncode:
+        ipfs_keys_msg = ipfs_keys.stderr.decode("utf-8")
+        if "lock" in ipfs_keys_msg:
+            time.sleep(1)
+            logger.warning(ipfs_keys_msg)
+            continue
+        else:
+            return
 
 
     keys = ipfs_keys.stdout.decode("utf-8").rstrip().split("\n")
