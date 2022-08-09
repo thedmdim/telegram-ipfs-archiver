@@ -19,7 +19,6 @@ dp = Dispatcher(bot)
 
 # Initialize youtube-dl
 ydl_opts = {
-    'outtmpl': f"{STORAGE}/%(title)s.%(ext)s",
     'logger': logger,
 }
 ydl = YoutubeDL(ydl_opts)
