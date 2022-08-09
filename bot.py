@@ -32,7 +32,7 @@ async def startup(dispatcher):
     ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
 
     if ipfs_keys.returncode:
-        logger.error("ipfs key list exited with 1")
+        logger.error(ipfs_keys.stderr.decode("utf-8"))
         return
 
 
