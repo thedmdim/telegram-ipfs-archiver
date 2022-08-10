@@ -66,6 +66,7 @@ def download_video(link: str, retries: int):
         time.sleep(2)
         try:
             title = ydl.extract_info(link, download=False).get("title")
+            print("tiitile!!!!!!!!!!!!!:", title)
             ydl.download([link])
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
@@ -101,7 +102,7 @@ async def post(message: types.Message):
         files = [{"hash":i[0], "filename":i[1]} for i in files]
 
         [dir_hash] = [i["hash"] for i in files if i["filename"] == STORAGE_DIR]
-        [last_added] = [i["hash"] for i in files if title in i["filename"]]
+        [last_added] = [i["hash"] for i in files if title.replace(" ", "_").replace("&", "_") in i["filename"]]
 
         await message.edit_text(message.md_text + f"\n\n[[ipfs]](https://ipfs.io/ipfs/{last_added})", parse_mode="MarkdownV2")
 
