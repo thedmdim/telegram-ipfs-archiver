@@ -127,7 +127,7 @@ async def post(message: types.Message):
 
         [last_added] = [i["hash"] for i in files if title in i["filename"]]
 
-        await message.edit_text(message.md_text + f" [ipfs](https://ipfs.io/ipfs/{last_added})",
+        await message.edit_text(message.md_text + f" | [ipfs](https://ipfs.io/ipfs/{last_added})",
                                 parse_mode="MarkdownV2")
 
 
