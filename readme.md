@@ -1,5 +1,7 @@
 # Telegram IPFS archivator
 
+![](example.jpg)
+
 ## Workflow
 
 1. This bot reads channel's posts
