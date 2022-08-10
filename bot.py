@@ -37,18 +37,6 @@ async def startup(dispatcher):
         os.makedirs(STORAGE)
         logger.info("Storage folder created")
 
-    return_code = 1
-    while return_code:
-        ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
-        return_code = ipfs_keys.returncode
-        ipfs_keys_stderr = ipfs_keys.stderr.decode("utf-8")
-        if ipfs_keys.returncode and "lock" in ipfs_keys_stderr:
-            time.sleep(1)
-            logger.warning(ipfs_keys_stderr)
-            continue
-        else:
-            return
-
     while True:
         ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
         if ipfs_keys.returncode:
@@ -56,6 +44,7 @@ async def startup(dispatcher):
             if "lock" in ipfs_keys_stderr:
                 logger.warning(ipfs_keys_stderr)
                 time.sleep(1)
+                continue
             else:
                 logger.info(ipfs_keys_stderr)
                 return
