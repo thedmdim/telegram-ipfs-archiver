@@ -66,7 +66,7 @@ def download_video(link: str, retries: int):
         time.sleep(2)
         try:
             info = ydl.extract_info(link, download=False)
-            title = os.path.split(ydl.prepare_filename(info)).pop()
+            title = os.path.split(ydl.prepare_filename(info))[1]
             ydl.download([link])
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
