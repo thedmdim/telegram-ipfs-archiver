@@ -28,6 +28,7 @@ dp = Dispatcher(bot)
 ydl_opts = {
     'outtmpl': f"{STORAGE}/%(title)s-%(id)s.%(ext)s",
     'logger': logger,
+    'restrictfilenames': True
 }
 ydl = YoutubeDL(ydl_opts)
 
