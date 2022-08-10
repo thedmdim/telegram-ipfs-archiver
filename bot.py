@@ -75,7 +75,7 @@ def download_video(link: str, retries: int):
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
             continue
-        return title
+        return title.split(".")[0]
     logger.error(f"Couldn't download video in {retries} tries")
 
 def add_and_publish():
@@ -111,13 +111,15 @@ def add_and_publish():
 @dp.channel_post_handler()
 async def post(message: types.Message):
     youtube_pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
-    match = re.search(youtube_pattern, message.text)
-    if match and message.from_id == CHANNEL_ID:
-        link = match.group(0)
-        logger.info(f"got youtube link: {link}")
+
+    message_lines = message.md_text.split("\n")
+    last_line = message_lines.pop().replace("\\","")
+    if re.match(youtube_pattern, last_line) and message.from_id == CHANNEL_ID:
+
+        logger.info(f"got youtube link: {last_line}")
 
         # download the video
-        title = download_video(link, MAX_RETRIES)
+        title = download_video(last_line, MAX_RETRIES)
         if title:
             logger.info(f"Downloading the video {title}")
         else:
@@ -127,8 +129,8 @@ async def post(message: types.Message):
 
         [last_added] = [i["hash"] for i in files if title in i["filename"]]
 
-        await message.edit_text(message.md_text + f" | [ipfs](https://ipfs.io/ipfs/{last_added})",
-                                parse_mode="MarkdownV2")
+        message_lines.append(f"[youtube]({last_line}) \| [ipfs](https://ipfs.io/ipfs/{last_added})")
+        await message.edit_text("\n".join(message_lines),parse_mode="MarkdownV2")
 
 
 if __name__ == '__main__':
