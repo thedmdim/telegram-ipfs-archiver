@@ -96,13 +96,8 @@ async def post(message: types.Message):
         logger.info("the video added to ipfs")
 
         ipfs_stdout = ipfs_add.stdout.decode("utf-8").rstrip().replace("added ", "")
-
-        logger.info(f"ipfs_stdout {ipfs_stdout}")
-
         files = [file.split(" ", 1) for file in ipfs_stdout.split("\n")]
         files = [{"hash":i[0], "filename":i[1]} for i in files]
-
-        logger.info(f"files: {files}")
 
         [dir_hash] = [i["hash"] for i in files if i["filename"] == STORAGE_DIR]
         [last_added] = [i["hash"] for i in files if title in i["filename"]]
