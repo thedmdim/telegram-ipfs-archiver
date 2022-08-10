@@ -49,6 +49,7 @@ async def startup(dispatcher):
             else:
                 logger.info(ipfs_keys_stderr)
                 return
+        break
 
     keys = ipfs_keys.stdout.decode("utf-8").rstrip().split("\n")
     if len(keys) > 1:
