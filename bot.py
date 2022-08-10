@@ -60,6 +60,7 @@ async def startup(dispatcher):
             return
 
 def download_video(link: str, retries: int):
+    logger.info("Download video")
     for i in range(retries):
         time.sleep(2)
         try:
