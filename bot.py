@@ -85,7 +85,8 @@ def download_video(link: str, retries: int):
 @dp.channel_post_handler()
 async def post(message: types.Message):
     youtube_pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
-    if match := re.search(youtube_pattern, message.text) and message.from_id == CHANNEL_ID:
+    match = re.search(youtube_pattern, message.text)
+    if match and message.from_id == CHANNEL_ID:
         link = match.group(0)
         logger.info(f"got youtube link: {link}")
 
