@@ -73,11 +73,12 @@ def download_video(link: str, retries: int):
     for i in range(retries):
         time.sleep(2)
         try:
+            title = ydl.extract_info(link, download=False).get("title")
             ydl.download([link])
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
             continue
-        return True
+        return title
     logger.error(f"Couldn't download video in {retries} tries")
 
 
@@ -89,13 +90,11 @@ async def post(message: types.Message):
         logger.info(f"got youtube link: {link}")
 
         # download the video
-        title = ydl.extract_info(link, download=False).get("title")
-        logger.info(f"Downloading the video {title}")
-
-
-        if not download_video(link, MAX_RETRIES):
+        title = download_video(link, MAX_RETRIES)
+        if title:
+            logger.info(f"Downloading the video {title}")
+        else:
             return
-
 
         ipfs_add = subprocess.run(["ipfs", "add", "--nocopy", "-r", f"{STORAGE}"], capture_output=True)
 
