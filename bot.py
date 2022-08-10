@@ -4,11 +4,17 @@ import time
 
 from aiogram import Bot, Dispatcher, executor, types
 from youtube_dl import YoutubeDL
+from youtube_dl.utils import DownloadError
 
 STORAGE_DIR = 'storage'
 API_TOKEN = os.environ.get("API_TOKEN")
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID"))
 STORAGE = os.path.abspath(STORAGE_DIR)
 K51_KEY = None
+
+# Configuration
+mrvar = os.environ.get("MAX_RETRIES")
+MAX_RETRIES = int(mrvar) if mrvar else 50
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +39,7 @@ async def startup(dispatcher):
     return_code = 1
     while return_code:
         ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
+        return_code = ipfs_keys.returncode
         ipfs_keys_stderr = ipfs_keys.stderr.decode("utf-8")
         if ipfs_keys.returncode and "lock" in ipfs_keys_stderr:
             time.sleep(1)
@@ -41,27 +48,53 @@ async def startup(dispatcher):
         else:
             return
 
+    while True:
+        ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
+        if ipfs_keys.returncode:
+            ipfs_keys_stderr = ipfs_keys.stderr.decode("utf-8")
+            if "lock" in ipfs_keys_stderr:
+                logger.warning(ipfs_keys_stderr)
+                time.sleep(1)
+            else:
+                logger.info(ipfs_keys_stderr)
+                return
+        else:
+            keys = ipfs_keys.stdout.decode("utf-8").rstrip().split("\n")
+            if len(keys) > 1:
+                try:
+                    global K51_KEY
+                    K51_KEY = keys[keys.index("key")]
+                    logger.info("found a key")
+                except ValueError:
+                    logger.info("no keys found, using default")
+            return
 
-    keys = ipfs_keys.stdout.decode("utf-8").rstrip().split("\n")
-    if len(keys) > 1:
+def download_video(link: str, retries: int):
+    for i in range(retries):
+        time.sleep(2)
         try:
-            global K51_KEY
-            K51_KEY = keys[keys.index("key")]
-            logger.info("found a key")
-        except ValueError:
-            logger.info("no keys found, using default")
+            ydl.download([link])
+        except DownloadError:
+            logger.warning(f"DownloadError, try {i}/{retries}")
+            continue
+        return True
+    logger.error(f"Couldn't download video in {retries} tries")
 
 
 @dp.channel_post_handler()
 async def post(message: types.Message):
     youtube_pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
-    if match := re.search(youtube_pattern, message.text):
+    if match := re.search(youtube_pattern, message.text) and message.from_id == CHANNEL_ID:
         link = match.group(0)
         logger.info(f"got youtube link: {link}")
 
         # download the video
         title = ydl.extract_info(link, download=False).get("title")
-        ydl.download([link])
+        logger.info(f"Downloading the video {title}")
+
+
+        if not download_video(link, MAX_RETRIES):
+            return
 
 
         ipfs_add = subprocess.run(["ipfs", "add", "--nocopy", "-r", f"{STORAGE}"], capture_output=True)

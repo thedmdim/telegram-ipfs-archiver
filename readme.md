@@ -12,6 +12,8 @@
 ```bash
 docker run -t \
   -e API_TOKEN=your_telegram_api_token \
+  -e CHANNEL_ID=your_channel_id \
+  -e MAX_RETRIES=50 \
   -v ~/your/video/dir/:/root/storage \
   -v ~/your/ipfs/key.key:/root/key.key \
   -p 4001:4001 \
