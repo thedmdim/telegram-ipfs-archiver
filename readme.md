@@ -23,5 +23,6 @@ docker run -t \
 ```
 
 ## Optional parameters
-MAX_RETRIES - max quantity youtube-dl will try to download the video, if not set default 50
+`MAX_RETRIES` - max quantity youtube-dl will try to download the video, if not set default 50
+
 `-v ~/your/ipfs/key.key:/root/key.key` - if not set, will use your default IPNS id
