@@ -4,9 +4,8 @@
 
 ## Workflow
 
-1. This bot reads channel's posts
-2. Gets first youtube link
-3. Downloads youtube video via youtube-dl
+1. This bot reads post's last line
+3. If it contains youtube link, starts download the video via youtube-dl
 4. Adds a folder with videos in ipfs
 5. Create IPNS link (for link to be static, use your own key)
 
@@ -22,3 +21,7 @@ docker run -t \
   -p 4001:4001/udp \
   thedmdim/telegram-ipfs-archiver
 ```
+
+## Optional parameters
+MAX_RETRIES - max quantity youtube-dl will try to download the video, if not set default 50
+`-v ~/your/ipfs/key.key:/root/key.key` - if not set, will use your default IPNS id
