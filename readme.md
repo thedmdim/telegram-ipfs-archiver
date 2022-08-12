@@ -1,3 +1,6 @@
+[![Docker Pulls](https://img.shields.io/docker/pulls/thedmdim/telegram-ipfs-archiver)](https://hub.docker.com/r/thedmdim/telegram-ipfs-archiver)
+[![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thedmdim/telegram-ipfs-archiver/latest)](https://hub.docker.com/r/thedmdim/telegram-ipfs-archiver)
+
 # Telegram IPFS archivator
 
 ![](example.jpg)
