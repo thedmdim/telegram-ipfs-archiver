@@ -65,17 +65,17 @@ async def startup(dispatcher):
 
 
 def download_video(link: str, retries: int):
-    logger.info("Download video")
     for i in range(retries):
-        time.sleep(2)
         try:
+            logger.info("Start downloading video")
             info = ydl.extract_info(link, download=False)
             title = os.path.split(ydl.prepare_filename(info))[1]
             ydl.download([link])
+            return title.split(".")[0]
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
+            time.sleep(2)
             continue
-        return title.split(".")[0]
     logger.error(f"Couldn't download video in {retries} tries")
 
 def add_and_publish():
@@ -84,6 +84,7 @@ def add_and_publish():
     if ipfs_add.returncode:
         logger.error(ipfs_add.stderr.decode("utf-8"))
         return
+
     logger.info("Folder updated")
 
     ipfs_stdout = ipfs_add.stdout.decode("utf-8").rstrip().replace("added ", "")
@@ -94,7 +95,6 @@ def add_and_publish():
 
     command = ["ipfs", "name", "publish", "--quieter", f"{dir_hash}"]
     if K51_KEY:
-        logger.info(f"k51 key {K51_KEY}")
         command.append(f"--key={K51_KEY}")
 
     ipfs_publish = subprocess.run(command, capture_output=True)
@@ -103,7 +103,7 @@ def add_and_publish():
         logger.error(ipfs_publish.stderr.decode("utf-8"))
         return
 
-    logger.info(f"IPNS updated: {ipfs_publish.stdout.decode('utf-8').rstrip()}")
+    logger.info(f"IPNS published: {ipfs_publish.stdout.decode('utf-8').rstrip()}")
 
     return files
 
@@ -116,13 +116,11 @@ async def post(message: types.Message):
     last_line = message_lines.pop().replace("\\","")
     if re.match(youtube_pattern, last_line) and message.from_id == CHANNEL_ID:
 
-        logger.info(f"got youtube link: {last_line}")
+        logger.info(f"got a youtube link: {last_line}")
 
         # download the video
         title = download_video(last_line, MAX_RETRIES)
-        if title:
-            logger.info(f"Downloading the video {title}")
-        else:
+        if not title:
             return
 
         files = add_and_publish()
