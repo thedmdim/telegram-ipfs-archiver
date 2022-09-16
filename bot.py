@@ -1,15 +1,15 @@
-from __future__ import unicode_literals
-import logging, re, os, subprocess
+import logging, re, subprocess, os
 import time
+from pathlib import Path
 
 from aiogram import Bot, Dispatcher, executor, types
 from youtube_dl import YoutubeDL
 from youtube_dl.utils import DownloadError
 
-STORAGE_DIR = 'storage'
+STORAGE = Path("storage")
 API_TOKEN = os.environ.get("API_TOKEN")
 CHANNEL_ID = int(os.environ.get("CHANNEL_ID"))
-STORAGE = os.path.abspath(STORAGE_DIR)
+
 K51_KEY = None
 
 # Configuration
@@ -33,11 +33,7 @@ ydl_opts = {
 ydl = YoutubeDL(ydl_opts)
 
 async def startup(dispatcher):
-    if not os.path.exists(STORAGE):
-        logger.info("No storage folder found")
-        os.makedirs(STORAGE)
-        logger.info("Storage folder created")
-
+    STORAGE.mkdir(exist_ok=True)
     while True:
         ipfs_keys = subprocess.run(["ipfs", "key", "list"], capture_output=True)
         if ipfs_keys.returncode:
@@ -69,9 +65,9 @@ def download_video(link: str, retries: int):
         try:
             logger.info("Start downloading video")
             info = ydl.extract_info(link, download=False)
-            title = os.path.split(ydl.prepare_filename(info))[1]
+            title = Path(ydl.prepare_filename(info)).stem
             ydl.download([link])
-            return title.split(".")[0]
+            return title
         except DownloadError:
             logger.warning(f"DownloadError, try {i}/{retries}")
             time.sleep(2)
@@ -91,7 +87,7 @@ def add_and_publish():
     files = [file.split(" ", 1) for file in ipfs_stdout.split("\n")]
     files = [{"hash": i[0], "filename": i[1]} for i in files]
 
-    [dir_hash] = [i["hash"] for i in files if i["filename"] == STORAGE_DIR]
+    [dir_hash] = [i["hash"] for i in files if Path(i["filename"]) == STORAGE]
 
     command = ["ipfs", "name", "publish", "--quieter", f"{dir_hash}"]
     if K51_KEY:
@@ -112,7 +108,7 @@ def add_and_publish():
 async def post(message: types.Message):
     youtube_pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
 
-    message_lines = message.md_text.split("\n")
+    message_lines = message.html_text.split("\n")
     last_line = message_lines.pop().replace("\\","")
     if re.match(youtube_pattern, last_line) and message.from_id == CHANNEL_ID:
 
@@ -127,8 +123,8 @@ async def post(message: types.Message):
 
         [last_added] = [i["hash"] for i in files if title in i["filename"]]
 
-        message_lines.append(f"[youtube]({last_line}) \| [ipfs](https://ipfs.io/ipfs/{last_added})")
-        await message.edit_text("\n".join(message_lines),parse_mode="MarkdownV2")
+        message_lines.append(f'<a href="{last_line}">youtube</a> | <a href="https://ipfs.io/ipfs/{last_added}">ipfs</a>')
+        await message.edit_text("\n".join(message_lines), parse_mode="HTML")
 
 
 if __name__ == '__main__':
