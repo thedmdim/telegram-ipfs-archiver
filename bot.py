@@ -106,16 +106,19 @@ def add_and_publish():
 
 @dp.channel_post_handler()
 async def post(message: types.Message):
-    youtube_pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
+    youtube_pattern = r"(?i)\b((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
 
     message_lines = message.html_text.split("\n")
     last_line = message_lines.pop().replace("\\","")
-    if re.match(youtube_pattern, last_line) and message.from_id == CHANNEL_ID:
 
-        logger.info(f"got a youtube link: {last_line}")
+    match = re.search(youtube_pattern, last_line)
+
+    if match and message.from_id == CHANNEL_ID:
+
+        logger.info(f"got a youtube link: {match.group(0)}")
 
         # download the video
-        title = download_video(last_line, MAX_RETRIES)
+        title = download_video(match.group(0), MAX_RETRIES)
         if not title:
             return
 
@@ -123,9 +126,10 @@ async def post(message: types.Message):
 
         [last_added] = [i["hash"] for i in files if title in i["filename"]]
 
-        message_lines.append(f'<a href="{last_line}">youtube</a> | <a href="https://ipfs.io/ipfs/{last_added}">ipfs</a>')
+        replacer = f'<a href="{last_line}">youtube</a> | <a href="https://ipfs.io/ipfs/{last_added}">ipfs</a>'
+        message_lines.append(re.sub(youtube_pattern, replacer, last_line, count=1))
         await message.edit_text("\n".join(message_lines), parse_mode="HTML")
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True, on_startup=startup)
+    executor.start_polling(dp, on_startup=startup)
