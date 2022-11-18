@@ -12,6 +12,9 @@
 4. Adds a folder with videos in ipfs
 5. Create IPNS link (for link to be static, use your own key)
 
+## Examlpe channel
+https://t.me/mov3371
+
 ## Docker run example
 ```bash
 docker run -t \
